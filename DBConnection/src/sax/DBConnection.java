@@ -270,6 +270,19 @@ public class DBConnection {
         }
         return false;
     }
+    
+      /**
+     * 
+     */
+    public boolean executeUpdatePreparedStatement() {
+        try {
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException err) {
+            System.err.println("Execute Prepared Statement error 114: " + err.getMessage());
+        }
+        return false;
+    }
     /**
      * 
      * @param sql Query to prepare Statement
@@ -343,6 +356,4 @@ public class DBConnection {
     public void setVersion(String version) {
         this.version = version;
     }
-
-    
 }
