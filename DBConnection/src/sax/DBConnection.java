@@ -20,18 +20,18 @@ import java.util.Map;
 /**
  * Library to easy connect to MySQL Database, use the MySQL JDBC Driver
  *
- * @author salvadorhm@gmail.com
- * @version 1.2
+ * @author Salvador Hernández Mendoza - salvadorhm@gmail.com
+ * @version 4.5 - 14/Jun/2017
+ *
+ *
  *
  */
-public class DBConnection {
+public class DBConnection extends Exception {
 
     private Connection connection;
     private Statement st;
     private ResultSet rs;
     private PreparedStatement ps;
-    
-    private String version = "1.2";
 
     private String db;
 
@@ -40,30 +40,39 @@ public class DBConnection {
     private HashMap<Object, Object> fieldList = new HashMap<>();
     private HashMap<Object, Object> allRow = new HashMap<>();
 
+    private String version = "4.5\n14/Jun/2017";
+
     /**
-     * 
-     * @param host Host direction 
-     * @param port port of mysql service 
+     *
+     * @param host Host direction
+     * @param port port of mysql service
      * @param db Database to connect
      * @param user User for Database connect
      * @param password Password for Database connect
+     * @throws sax.DBConnection
      */
-    public DBConnection(int port, String host, String db, String user, String password){
+    public DBConnection(int port, String host, String db, String user, String password) throws DBConnection {
         try {
             this.db = db;
             Class.forName("com.mysql.jdbc.Driver").newInstance();
             connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + db, "'" + user + "'", password);
             st = connection.createStatement();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | SQLException err) {
-            System.err.println("Connection Error 100: " + err.getMessage());
+            //System.err.println("Connection Error 100: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Connection Error 100: " + err.getMessage());
         }
+    }
+
+    public DBConnection(String message) {
+        super(message);
     }
 
     /**
      *
      * @return HashMap with Database Tables List
+     * @throws sax.DBConnection
      */
-    public HashMap getTableList(){
+    public HashMap getTableList() throws DBConnection {
         String sql = "SHOW TABLE STATUS FROM " + db;
         this.executeQuery(sql);
         tableList.clear();
@@ -71,8 +80,10 @@ public class DBConnection {
         do {
             try {
                 tableList.put(p++, rs.getString("name"));
+
             } catch (SQLException | NullPointerException err) {
-                System.err.println("Get tables error 101: " + err.getMessage());
+                //System.err.println("Get tables error 101: " + err.getMessage());
+                throw new DBConnection("\nDBConnectionException: Get tables error 101: " + err.getMessage());
             }
         } while (moveNext());
         return tableList;
@@ -82,8 +93,9 @@ public class DBConnection {
      *
      * @param table Table to show Table fields
      * @return HashMap with Field List
+     * @throws sax.DBConnection
      */
-    public HashMap getFieldList(String table){
+    public HashMap getFieldList(String table) throws DBConnection {
         String sql = "SHOW COLUMNS FROM " + table + ";";
         this.executeQuery(sql);
         fieldList.clear();
@@ -92,80 +104,98 @@ public class DBConnection {
             try {
                 fieldList.put(p++, rs.getString("field"));
             } catch (SQLException | NullPointerException err) {
-                System.err.println("Get fields error 102: " + err.getMessage());
+                //System.err.println("Get fields error 102: " + err.getMessage());
+                throw new DBConnection("\nDBConnectionException: Get fields error 102: " + err.getMessage());
             }
         } while (moveNext());
         return fieldList;
     }
+
     /**
-     * 
-     * @return boolean if can move previous
+     *
+     * @return True if move previous
+     * @throws sax.DBConnection
      */
-    public boolean movePrevious() {
+    public boolean movePrevious() throws DBConnection {
+        boolean result = false;
+
         try {
             if (!rs.isFirst()) {
                 rs.previous();
-                return true;
+                result = true;
             }
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Previous row error 103: " + err.getMessage());
+            //System.err.println("Previous row error 103: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Previous row error 103: " + err.getMessage());
         }
-        return false;
+        return result;
     }
+
     /**
-     * 
-     * @return boolean if can move next
+     *
+     * @return True is move next
+     * @throws sax.DBConnection
      */
-    public boolean moveNext(){
+    public boolean moveNext() throws DBConnection {
+        boolean result = false;
         try {
             if (!rs.isLast()) {
                 rs.next();
-                return true;
+                result = true;
             }
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Next row error 104: " + err.getMessage());
+            //System.err.println("Next row error 104: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Next row error 104: " + err.getMessage());
         }
-        return false;
+        return result;
     }
+
     /**
-     * 
-     * @return boolean if can move first
+     *
+     * @return True if move first
+     * @throws sax.DBConnection
      */
-    public boolean moveFirst() {
+    public boolean moveFirst() throws DBConnection {
+        boolean result = false;
         try {
             rs.first();
-            return true;
+            result = true;
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Fisrt row error 105: " + err.getMessage());
+            //System.err.println("Fisrt row error 105: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Fisrt row error 105: " + err.getMessage());
         }
-        return false;
+        return result;
     }
+
     /**
-     * 
-     * @return boolean if can move last
+     *
+     * @return True if move last
+     * @throws sax.DBConnection
      */
-    public boolean moveLast(){
+    public boolean moveLast() throws DBConnection {
+        boolean result = false;
         try {
             rs.last();
-            return true;
+            result = true;
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Last row error 106: " + err.getMessage());
+            //System.err.println("Last row error 106: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Last row error 106: " + err.getMessage());
         }
-        return false;
+        return result;
     }
 
     /**
      *
      * @param sqlQuery SQL query to execute
+     * @throws sax.DBConnection
      */
-    public boolean executeQuery(String sqlQuery){
+    public void executeQuery(String sqlQuery) throws DBConnection {
         try {
             rs = st.executeQuery(sqlQuery);
-            return true;
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Execute query " + sqlQuery + " error 107: " + err.getMessage());
+            //System.err.println("Execute query " + sqlQuery + " error 107: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Execute query " + sqlQuery + " error 107: " + err.getMessage());
         }
-        return false;
     }
 
     /**
@@ -179,129 +209,144 @@ public class DBConnection {
     /**
      *
      * @param sqlQuery SQL query for update data
+     * @return
+     * @throws sax.DBConnection
      */
-    public boolean executeUpdate(String sqlQuery){
+    public boolean executeUpdate(String sqlQuery) throws DBConnection {
+        boolean result = false;
         try {
             st.executeUpdate(sqlQuery);
-            return true;
+            result = true;
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Execute update " + sqlQuery + " error 108: " + err.getMessage());
+            //System.err.println("Execute update " + sqlQuery + " error 108: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Execute update " + sqlQuery + " error 108: " + err.getMessage());
         }
-        return false;
+        return result;
     }
 
     /**
      *
      * @param sqlQuery SQL query for show in table
+     * @return True if update table
+     * @throws sax.DBConnection
      */
-    public boolean updateTable(String sqlQuery){
+    public boolean updateTable(String sqlQuery) throws DBConnection {
+        boolean result = false;
         try {
             rs = st.executeQuery(sqlQuery);
             tableModel = (DefaultTableModel) DbUtils.resultSetToTableModel(rs);
-            System.out.println("table model ready");
-            return true;
+            //System.out.println("table model ready");
+            result = true;
         } catch (SQLException | NullPointerException | NoClassDefFoundError err) {
-            System.err.println("Udapte Table " + sqlQuery + " error 109: " + err.getMessage());
+            //System.err.println("Udapte Table " + sqlQuery + " error 109: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Execute update " + sqlQuery + " error 108: " + err.getMessage());
         }
-        return false;
+        return result;
     }
 
     /**
      *
      * @param field Table field to show
      * @return field value in String format
+     * @throws sax.DBConnection
      */
-    public String getString(String field){
+    public String getString(String field) throws DBConnection {
+        String result = null;
         try {
-            return rs.getString(field);
+            result = rs.getString(field);
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Get String " + field + " error 110: " + err.getMessage());
+            //System.err.println("Get String " + field + " error 110: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Get String " + field + " error 110: " + err.getMessage());
         }
-        return null;
+        return result;
+
     }
+
     /**
      *
      * @param field Table field to show
      * @return field value in String format
+     * @throws sax.DBConnection
      */
-    public int getInteger(String field){
+    public int getInteger(String field) throws DBConnection {
+        int result = 0;
         try {
-            return rs.getInt(field);
+            result = rs.getInt(field);
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Get Integer " + field + " error 111: " + err.getMessage());
+            //System.err.println("Get Integer " + field + " error 111: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Get Integer " + field + " error 111: " + err.getMessage());
         }
-        return 0;
+        return result;
     }
+
     /**
      *
      * @param field Table field to show
      * @return field value in float format
+     * @throws sax.DBConnection
      */
-    public float getFloat(String field){
+    public float getFloat(String field) throws DBConnection {
+        float result = 0.0f;
         try {
-            return rs.getInt(field);
+            result = rs.getFloat(field);
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Get Float " + field + " error 112: " + err.getMessage());
+            //System.err.println("Get Float " + field + " error 112: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Get Float " + field + " error 112: " + err.getMessage());
         }
-        return 0;
+        return result;
     }
+
     /**
      *
      * @param field Table field to show
      * @return field value in double format
+     * @throws sax.DBConnection
      */
-    public double getDouble(String field){
+    public double getDouble(String field) throws DBConnection {
+        double result = 0.0;
         try {
-            return rs.getInt(field);
+            result = rs.getDouble(field);
         } catch (SQLException | NullPointerException err) {
-            System.err.println("Get Double " + field + " error 113: " + err.getMessage());
+            //System.err.println("Get Double " + field + " error 113: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Get Double " + field + " error 113: " + err.getMessage());
         }
-        return 0;
+        return result;
     }
+
     /**
-     * 
+     *
+     * @throws sax.DBConnection
      */
-    public boolean executePreparedStatement() {
-        try {
-            rs= ps.executeQuery();
-            return true;
-        } catch (SQLException err) {
-            System.err.println("Execute Prepared Statement error 114: " + err.getMessage());
-        }
-        return false;
-    }
-    
-      /**
-     * 
-     */
-    public boolean executeUpdatePreparedStatement() {
+    public void executePreparedStatement() throws DBConnection {
         try {
             ps.executeUpdate();
-            return true;
         } catch (SQLException err) {
-            System.err.println("Execute Prepared Statement error 114: " + err.getMessage());
+            //System.err.println("Execute Prepared Statement error 114: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Execute Prepared Statement error 114: " + err.getMessage());
         }
-        return false;
     }
+
     /**
-     * 
+     *
      * @param sql Query to prepare Statement
+     * @throws sax.DBConnection
      */
-    public boolean prepareStatement(String sql){
+    public void prepareStatement(String sql) throws DBConnection {
         try {
             ps = connection.prepareStatement(sql);
-            return true;
         } catch (SQLException err) {
-            System.err.println("Prepare Statement " + sql + " error 115: " + err.getMessage());
+            //System.err.println("Prepare Statement " + sql + " error 115: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Prepare Statement " + sql + " error 115: " + err.getMessage());
         }
-        return false;
     }
+
     /**
-     * 
+     *
      * @param index index of prepared statement
      * @param value Object value
+     * @throws sax.DBConnection
      */
-    public boolean setPreparedStatement(int index, Object value){
+    public void setPreparedStatement(int index, Object value) throws DBConnection {
         try {
             if (value instanceof String) {
                 ps.setString(index, (String) value);
@@ -314,46 +359,42 @@ public class DBConnection {
             } else if (value instanceof Date) {
                 ps.setDate(index, (Date) value);
             }
-            return true;
         } catch (NullPointerException | SQLException err) {
-            System.err.println("Prepared Statement error 116: " + err.getMessage());
+            //System.err.println("Prepared Statement error 116: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: Prepared Statement error 116: " + err.getMessage());
         }
-        return false;
     }
+
     /**
-     * 
+     *
      * @param table Database Table to be mapped
      * @param rows Number of rows to show
-     * @return  HashMap with all the fields in the Database Table
+     * @return HashMap with all the fields in the Database Table
+     * @throws sax.DBConnection
      */
-    public HashMap<Object, Object> getAllRow(String table, int rows){
+    public HashMap<Object, Object> getAllRow(String table, int rows) throws DBConnection {
         try {
             String sql = "SELECT * FROM " + table + " LIMIT " + rows + ";";
             executeQuery(sql);
             ResultSetMetaData metaData = rs.getMetaData();
             int colCount = metaData.getColumnCount();
-            int index=0;
+            int index = 0;
             while (rs.next()) {
                 Map<String, Object> columns = new HashMap<>();
                 for (int i = 1; i <= colCount; i++) {
                     columns.put(metaData.getColumnLabel(i), rs.getObject(i));
                 }
-                
-                allRow.put(index++,columns);
+
+                allRow.put(index++, columns);
             }
         } catch (NullPointerException | SQLException err) {
-            System.err.println("getAllRow Error 117: " + err.getMessage());
+            //System.err.println("getAllRow Error 117: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: getAllRow Error 117: " + err.getMessage());
         }
         return allRow;
     }
-    
-    
-    /**
-     * Set the value of version
-     *
-     * @param version new value of version
-     */
-    public void setVersion(String version) {
-        this.version = version;
+
+    public void version() {
+        System.out.println("Salvador Hernández Mendoza\nsalvadorhm@gmail.com\nversión " + this.version);
     }
 }
