@@ -40,7 +40,7 @@ public class DBConnection extends Exception {
     private HashMap<Object, Object> fieldList = new HashMap<>();
     private HashMap<Object, Object> allRow = new HashMap<>();
 
-    private String version = "4.5\n14/Jun/2017";
+    private String version = "01072019";
 
     /**
      *
@@ -58,8 +58,7 @@ public class DBConnection extends Exception {
             connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + db, "'" + user + "'", password);
             st = connection.createStatement();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | SQLException err) {
-            //System.err.println("Connection Error 100: " + err.getMessage());
-            throw new DBConnection("\nDBConnectionException: Connection Error 100: " + err.getMessage());
+            throw new DBConnection("\nDBConnectionException: DBConnection Error 100: " + err.getMessage());
         }
     }
 
@@ -82,8 +81,7 @@ public class DBConnection extends Exception {
                 tableList.put(p++, rs.getString("name"));
 
             } catch (SQLException | NullPointerException err) {
-                //System.err.println("Get tables error 101: " + err.getMessage());
-                throw new DBConnection("\nDBConnectionException: Get tables error 101: " + err.getMessage());
+                throw new DBConnection("\nDBConnectionException: getTableList error 101: " + err.getMessage());
             }
         } while (moveNext());
         return tableList;
@@ -104,8 +102,7 @@ public class DBConnection extends Exception {
             try {
                 fieldList.put(p++, rs.getString("field"));
             } catch (SQLException | NullPointerException err) {
-                //System.err.println("Get fields error 102: " + err.getMessage());
-                throw new DBConnection("\nDBConnectionException: Get fields error 102: " + err.getMessage());
+                throw new DBConnection("\nDBConnectionException: getFieldList error 102: " + err.getMessage());
             }
         } while (moveNext());
         return fieldList;
@@ -121,12 +118,16 @@ public class DBConnection extends Exception {
 
         try {
             if (!rs.isFirst()) {
-                rs.previous();
-                result = true;
+                if (rs.previous() == true) {
+                    result = true;
+                } else {
+                    result = false;
+                }
+
             }
         } catch (SQLException | NullPointerException err) {
-            //System.err.println("Previous row error 103: " + err.getMessage());
-            throw new DBConnection("\nDBConnectionException: Previous row error 103: " + err.getMessage());
+            result = false;
+            throw new DBConnection("\nDBConnectionException: movePrevious 103: " + err.getMessage());
         }
         return result;
     }
@@ -140,12 +141,15 @@ public class DBConnection extends Exception {
         boolean result = false;
         try {
             if (!rs.isLast()) {
-                rs.next();
-                result = true;
+                if (rs.next() == true) {
+                    result = true;
+                } else {
+                    result = false;
+                }
             }
         } catch (SQLException | NullPointerException err) {
-            //System.err.println("Next row error 104: " + err.getMessage());
-            throw new DBConnection("\nDBConnectionException: Next row error 104: " + err.getMessage());
+            result = false;
+            throw new DBConnection("\nDBConnectionException: moveNext 104: " + err.getMessage());
         }
         return result;
     }
@@ -158,11 +162,14 @@ public class DBConnection extends Exception {
     public boolean moveFirst() throws DBConnection {
         boolean result = false;
         try {
-            rs.first();
-            result = true;
+            if (rs.first() == true) {
+                result = true;
+            } else {
+                result = false;
+            }
         } catch (SQLException | NullPointerException err) {
-            //System.err.println("Fisrt row error 105: " + err.getMessage());
-            throw new DBConnection("\nDBConnectionException: Fisrt row error 105: " + err.getMessage());
+            result = false;
+            throw new DBConnection("\nDBConnectionException: MoveFirst 105: " + err.getMessage());
         }
         return result;
     }
@@ -175,11 +182,14 @@ public class DBConnection extends Exception {
     public boolean moveLast() throws DBConnection {
         boolean result = false;
         try {
-            rs.last();
-            result = true;
+            if (rs.last() == true) {
+                result = true;
+            } else {
+                result = false;
+            }
         } catch (SQLException | NullPointerException err) {
-            //System.err.println("Last row error 106: " + err.getMessage());
-            throw new DBConnection("\nDBConnectionException: Last row error 106: " + err.getMessage());
+            result = false;
+            throw new DBConnection("\nDBConnectionException: moveLast 106: " + err.getMessage());
         }
         return result;
     }
@@ -193,7 +203,6 @@ public class DBConnection extends Exception {
         try {
             rs = st.executeQuery(sqlQuery);
         } catch (SQLException | NullPointerException err) {
-            //System.err.println("Execute query " + sqlQuery + " error 107: " + err.getMessage());
             throw new DBConnection("\nDBConnectionException: Execute query " + sqlQuery + " error 107: " + err.getMessage());
         }
     }
@@ -238,7 +247,7 @@ public class DBConnection extends Exception {
             //System.out.println("table model ready");
             result = true;
         } catch (SQLException | NullPointerException | NoClassDefFoundError err) {
-            //System.err.println("Udapte Table " + sqlQuery + " error 109: " + err.getMessage());
+            result = false;
             throw new DBConnection("\nDBConnectionException: Execute update " + sqlQuery + " error 108: " + err.getMessage());
         }
         return result;
@@ -255,7 +264,7 @@ public class DBConnection extends Exception {
         try {
             result = rs.getString(field);
         } catch (SQLException | NullPointerException err) {
-            //System.err.println("Get String " + field + " error 110: " + err.getMessage());
+            result = null;
             throw new DBConnection("\nDBConnectionException: Get String " + field + " error 110: " + err.getMessage());
         }
         return result;
@@ -321,7 +330,6 @@ public class DBConnection extends Exception {
         try {
             ps.executeUpdate();
         } catch (SQLException err) {
-            //System.err.println("Execute Prepared Statement error 114: " + err.getMessage());
             throw new DBConnection("\nDBConnectionException: Execute Prepared Statement error 114: " + err.getMessage());
         }
     }
@@ -335,7 +343,6 @@ public class DBConnection extends Exception {
         try {
             ps = connection.prepareStatement(sql);
         } catch (SQLException err) {
-            //System.err.println("Prepare Statement " + sql + " error 115: " + err.getMessage());
             throw new DBConnection("\nDBConnectionException: Prepare Statement " + sql + " error 115: " + err.getMessage());
         }
     }
